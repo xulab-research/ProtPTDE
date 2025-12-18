@@ -237,7 +237,7 @@ def objective(trial, random_seed):
                 best_loss = validation_loss_val
                 best_corr = test_corr_val
             elif optimizer.param_groups[0]["lr"] <= min_lr and epoch > warmup_epochs:
-                print(f"[{models_name} | num_layer={num_layer} | max_lr={format_float_no_sci_no_trailzero(max_lr)} | seed={random_seed} | fold={k_fold_index}] " f"Stopping at epoch {epoch} due to no improvement in validation loss.")
+                print(f"[{models_name} | num_layer={num_layer} | max_lr={format_float_no_sci_no_trailzero(max_lr)} | seed={random_seed} | fold={k_fold_index}] " f"Stopping at epoch {epoch} due to no improvement in validation loss.",flush=True)
                 break
 
         save_csv_no_sci_append(path=f"{file}/k_fold_index-{k_fold_index}_loss.csv", new_df=loss_df.reset_index().rename(columns={"index": "epoch"}), append=False)
@@ -306,11 +306,10 @@ def main(random_seed):
 
     # Optuna-like "study created" log
     study_name = f"no-name-{uuid.uuid4()}"
-    print(f"A new study created in memory with name: {study_name}")
+    print(f"A new study created in memory with name: {study_name}", flush=True)
 
     best_value = None
     best_trial_number = None
-    new_rows = []
 
     for i, combo in enumerate(filtered_grid):
         mc = combo["model_combination"]
@@ -345,13 +344,13 @@ def main(random_seed):
             best_value = score_val
             best_trial_number = trial_number
         params_str = repr_params(mc, nl, lr)
-        print(f"Trial {trial_number} finished with value: {format_float_no_sci_no_trailzero(score_val)} and parameters: {params_str}. " f"Best is trial {best_trial_number} with value: {format_float_no_sci_no_trailzero(best_value)}.")
+        print(f"Trial {trial_number} finished with value: {format_float_no_sci_no_trailzero(score_val)} and parameters: {params_str}. " f"Best is trial {best_trial_number} with value: {format_float_no_sci_no_trailzero(best_value)}.", flush=True)
 
-        new_rows.append({"number": trial_number, "value": score_val,  "params_max_lr": lr, "params_model_combination": mc, "params_num_layer": nl, "system_attrs_grid_id": trial_number, "system_attrs_search_space": search_space_repr, "state": "COMPLETE"})
+        
+        row_df = pd.DataFrame([{"number": trial_number,"value": score_val,"params_max_lr": lr,"params_model_combination": mc,"params_num_layer": nl,"system_attrs_grid_id": trial_number,"system_attrs_search_space": search_space_repr,"state": "COMPLETE",}], 
+                              columns=[ "number","value","params_max_lr","params_model_combination","params_num_layer","system_attrs_grid_id","system_attrs_search_space","state",])
 
-    new_df = pd.DataFrame(new_rows, columns=["number", "value",  "params_max_lr", "params_model_combination", "params_num_layer", "system_attrs_grid_id", "system_attrs_search_space", "state"])
-
-    save_csv_no_sci_append(path=result_path, new_df=new_df, append=True, dedup_cols=["number"])
+        save_csv_no_sci_append(path=result_path, new_df=row_df, append=True, dedup_cols=["number"])
 
 
 if __name__ == "__main__":
