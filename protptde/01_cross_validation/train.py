@@ -16,6 +16,7 @@ from model import BatchData, ModelUnion, to_gpu, spearman_loss, spearman_corr
 with open("../config/config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
+
 # ---------------------------
 # Helpers: number formatting
 # ---------------------------
@@ -49,19 +50,6 @@ def save_csv_no_sci_append(path: str, new_df: pd.DataFrame, append: bool, dedup_
         df_float_to_str(merged).to_csv(path, index=False)
     else:
         df_float_to_str(new_df).to_csv(path, index=False)
-
-
-def repr_search_space(max_lr_list, model_combinations, num_layer_list) -> str:
-    """
-    Stringify the search space in Optuna style, with all numbers in non-scientific notation and a clear structure.
-    """
-    search_space = {"max_lr": [format_float_no_sci_no_trailzero(x) for x in max_lr_list],"model_combination": list(map(str, model_combinations)),"num_layer": list(map(int, num_layer_list)),}
-    return json.dumps(search_space, ensure_ascii=False)
-
-
-def repr_params(mc, nl, lr):
-    """Mimic Optuna params dict in logs."""
-    return f"{{'model_combination': '{mc}', 'num_layer': {nl}, 'max_lr': {format_float_no_sci_no_trailzero(lr)}}}"
 
 
 # ---------------------------
@@ -160,7 +148,7 @@ def objective(trial, random_seed):
     mskf = MultilabelStratifiedKFold(n_splits=k_fold, shuffle=cv_shuffle, random_state=random_seed)
 
     for k_fold_index, (train_index, validation_index) in enumerate(mskf.split(y_mut_pos[train_validation_index], y_mut_pos[train_validation_index])):
-        train_csv = train_validation_csv.iloc[train_index].copy() 
+        train_csv = train_validation_csv.iloc[train_index].copy()
         validation_csv = train_validation_csv.iloc[validation_index].copy()
 
         train_dataset = BatchData(train_csv, selected_models)
@@ -237,7 +225,7 @@ def objective(trial, random_seed):
                 best_loss = validation_loss_val
                 best_corr = test_corr_val
             elif optimizer.param_groups[0]["lr"] <= min_lr and epoch > warmup_epochs:
-                print(f"[{models_name} | num_layer={num_layer} | max_lr={format_float_no_sci_no_trailzero(max_lr)} | seed={random_seed} | fold={k_fold_index}] " f"Stopping at epoch {epoch} due to no improvement in validation loss.",flush=True)
+                print(f"[{models_name} | num_layer={num_layer} | max_lr={format_float_no_sci_no_trailzero(max_lr)} | seed={random_seed} | fold={k_fold_index}] " f"Stopping at epoch {epoch} due to no improvement in validation loss.", flush=True)
                 break
 
         save_csv_no_sci_append(path=f"{file}/k_fold_index-{k_fold_index}_loss.csv", new_df=loss_df.reset_index().rename(columns={"index": "epoch"}), append=False)
@@ -272,8 +260,6 @@ def main(random_seed):
     model_combinations = [",".join(combo) for combo in itertools.combinations(all_models, model_number)]
     num_layer_list = list(range(hyper_search["num_layer"]["min"], hyper_search["num_layer"]["max"] + 1))
     max_lr_list = hyper_search["max_lr"]["choices"]
-
-    search_space_repr = repr_search_space(max_lr_list, model_combinations, num_layer_list)
 
     full_grid = []
     for mc in model_combinations:
@@ -334,21 +320,37 @@ def main(random_seed):
                     return self._nl_val
                 raise ValueError(f"Unexpected int param: {name}")
 
-        
         score_val = objective(DummyTrial(mc, nl, lr), random_seed)
-        
+
         trial_number = next_number_base + i
 
         # Update best and log trial result (Optuna-like)
         if (best_value is None) or (score_val > best_value):
             best_value = score_val
             best_trial_number = trial_number
-        params_str = repr_params(mc, nl, lr)
+        params_str = f"{{'model_combination': '{mc}', 'num_layer': {nl}, 'max_lr': {format_float_no_sci_no_trailzero(lr)}}}"
         print(f"Trial {trial_number} finished with value: {format_float_no_sci_no_trailzero(score_val)} and parameters: {params_str}. " f"Best is trial {best_trial_number} with value: {format_float_no_sci_no_trailzero(best_value)}.", flush=True)
 
-        
-        row_df = pd.DataFrame([{"number": trial_number,"value": score_val,"params_max_lr": lr,"params_model_combination": mc,"params_num_layer": nl,"system_attrs_grid_id": trial_number,"system_attrs_search_space": search_space_repr,"state": "COMPLETE",}], 
-                              columns=[ "number","value","params_max_lr","params_model_combination","params_num_layer","system_attrs_grid_id","system_attrs_search_space","state",])
+        row_df = pd.DataFrame(
+            [
+                {
+                    "number": trial_number,
+                    "value": score_val,
+                    "params_max_lr": lr,
+                    "params_model_combination": mc,
+                    "params_num_layer": nl,
+                    "state": "COMPLETE",
+                }
+            ],
+            columns=[
+                "number",
+                "value",
+                "params_max_lr",
+                "params_model_combination",
+                "params_num_layer",
+                "state",
+            ],
+        )
 
         save_csv_no_sci_append(path=result_path, new_df=row_df, append=True, dedup_cols=["number"])
 
