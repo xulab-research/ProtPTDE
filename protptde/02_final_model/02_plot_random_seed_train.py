@@ -5,10 +5,6 @@ from cycler import cycler
 import plotly.express as px
 import matplotlib.pyplot as plt
 
-#######################################################################
-# predefined parameters
-#######################################################################
-
 plt.rcParams["figure.figsize"] = (10, 10)
 plt.rcParams["axes.labelsize"] = 18
 plt.rcParams["xtick.labelsize"] = 18
@@ -27,15 +23,9 @@ for i in range(100):
     data.loc[i, "random_seed"] = i
     data.loc[i, "best_train_epoch_ratio"] = tmp["train_loss"].argmin() / len(tmp) * 100
     data.loc[i, "best_test_epoch_ratio"] = tmp["test_corr"].argmax() / len(tmp) * 100
-
     data.loc[i, "train_loss"] = tmp.iloc[tmp["test_corr"].argmax(), 0]
     data.loc[i, "test_corr"] = tmp["test_corr"].max()
 
-#######################################################################
-# plot
-#######################################################################
-
-# plot best epoch ratio
 result = pd.DataFrame()
 result["train"] = data["best_train_epoch_ratio"]
 result["test"] = data["best_test_epoch_ratio"]
@@ -47,13 +37,11 @@ sns.histplot(data=result, x="epoch ratio", hue="dataset", kde=True, ax=ax, bins=
 ax.set(xlabel="Best epoch ratio (%)", ylabel="Count")
 plt.savefig("Hist_best_train_test_epoch_ratio.pdf", bbox_inches="tight")
 
-# plot best epoch ratio
 fig, ax = plt.subplots()
 sns.scatterplot(data=data, x="best_train_epoch_ratio", y="best_test_epoch_ratio", hue="test_corr", palette="coolwarm", ax=ax)
 ax.set(xlabel="Best train epoch ratio (%)", ylabel="Best test epoch ratio (%)")
 plt.savefig("Scatter_best_train_test_epoch_ratio.pdf", bbox_inches="tight")
 
-# plot best epoch ratio
 fig, ax = plt.subplots()
 g = sns.jointplot(data=data, x="best_train_epoch_ratio", y="best_test_epoch_ratio", kind="scatter")
 g.ax_joint.set_xlabel("Best train epoch ratio (%)", fontsize=12)
@@ -64,13 +52,11 @@ g.ax_joint.tick_params(axis="x", labelsize=10)
 g.ax_joint.tick_params(axis="y", labelsize=10)
 plt.savefig("Hist_Scatter_best_train_test_epoch_ratio.pdf", bbox_inches="tight")
 
-# plot best test corr
 fig, ax = plt.subplots()
 sns.histplot(data["test_corr"], bins=25, kde=True, ax=ax, legend=False)
 ax.set(xlabel="Test dataset Spearman " + r"$\rho$", ylabel="Count", xlim=(0, 1))
 plt.savefig("Hist_test_corr.pdf", bbox_inches="tight")
 
-# save html
 fig = px.scatter(data, x="best_train_epoch_ratio", y="best_test_epoch_ratio", color="test_corr", hover_name="random_seed")
 fig.update_layout(
     xaxis_title="Best train epoch ratio (%)",
@@ -79,22 +65,12 @@ fig.update_layout(
 )
 fig.write_html("Scatter_best_train_test_epoch_ratio.html")
 
-#######################################################################
-# select model
-#######################################################################
-
 counts, bins = np.histogram(data["test_corr"], bins=25)
-
 max_bin_index = np.argmax(counts)
 bin_start = bins[max_bin_index]
 bin_end = bins[max_bin_index + 1]
-
-# select models in the peak bin
 peak_models = data[(data["test_corr"] >= bin_start) & (data["test_corr"] < bin_end)]
-
-# select the model with the closest test_corr to the median of the peak bin
 peak_median = peak_models["test_corr"].median()
 selected_index = (peak_models["test_corr"] - peak_median).abs().idxmin()
 selected_index = int(selected_index)
-
 print("Selected Model Index:", selected_index, "Test Corr:", data.loc[selected_index, "test_corr"])
