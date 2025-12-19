@@ -1,7 +1,8 @@
 import json
 import torch
-import soft_rank_pytorch
 from Bio import SeqIO
+import soft_rank_pytorch
+
 
 with open("../config/config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
