@@ -3,10 +3,8 @@ import soft_rank_numpy
 
 
 def wrap_class(cls, **kwargs):
-    """Wraps the given NumpyOp in a torch Function."""
 
     class NumpyOpWrapper(torch.autograd.Function):
-        """A torch Function wrapping a NumpyOp."""
 
         @staticmethod
         def forward(ctx, values):
@@ -26,21 +24,6 @@ def map_tensor(map_fn, tensor):
 
 
 def soft_rank(values, direction="ASCENDING", regularization_strength=1.0, regularization="l2"):
-    r"""Soft rank the given values (tensor) along the second axis.
-
-    The regularization strength determines how close are the returned values
-    to the actual ranks.
-
-    Args:
-      values: A 2d-tensor holding the numbers to be ranked.
-      direction: Either 'ASCENDING' or 'DESCENDING'.
-      regularization_strength: The regularization strength to be used. The smaller
-      this number, the closer the values to the true ranks.
-      regularization: Which regularization method to use. It
-        must be set to one of ("l2", "kl", "log_kl").
-    Returns:
-      A 2d-tensor, soft-ranked along the second axis.
-    """
     if len(values.shape) != 2:
         raise ValueError("'values' should be a 2d-tensor " "but got %r." % values.shape)
 
@@ -49,21 +32,6 @@ def soft_rank(values, direction="ASCENDING", regularization_strength=1.0, regula
 
 
 def soft_sort(values, direction="ASCENDING", regularization_strength=1.0, regularization="l2"):
-    r"""Soft sort the given values (tensor) along the second axis.
-
-    The regularization strength determines how close are the returned values
-    to the actual sorted values.
-
-    Args:
-      values: A 2d-tensor holding the numbers to be sorted.
-      direction: Either 'ASCENDING' or 'DESCENDING'.
-      regularization_strength: The regularization strength to be used. The smaller
-      this number, the closer the values to the true sorted values.
-      regularization: Which regularization method to use. It
-        must be set to one of ("l2", "log_kl").
-    Returns:
-      A 2d-tensor, soft-sorted along the second axis.
-    """
     if len(values.shape) != 2:
         raise ValueError("'values' should be a 2d-tensor " "but got %s." % str(values.shape))
 
