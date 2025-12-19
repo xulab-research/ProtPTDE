@@ -17,19 +17,6 @@ with open("../config/config.json", "r", encoding="utf-8") as f:
 
 
 def generate_wt_input(seq):
-    """
-    Generates wild-type input dictionary with sequence and pre-computed embeddings.
-
-    This function creates an input dictionary containing the wild-type sequence
-    and loads pre-computed embeddings for all selected models. The embeddings
-    are moved to GPU and prepared for model inference.
-
-    Args:
-        seq (str): Wild-type protein sequence
-
-    Returns:
-        dict: Dictionary containing sequence and model embeddings for wild-type input
-    """
     input_dict = {"seq": seq}
     with torch.no_grad():
         for model_name in selected_models:
@@ -39,19 +26,6 @@ def generate_wt_input(seq):
 
 
 def generate_mut_input(seq):
-    """
-    Generates mutant input dictionary with sequence and computed embeddings.
-
-    This function creates an input dictionary containing the mutant sequence
-    and computes embeddings on-the-fly for all selected models using their
-    respective embedding functions. The embeddings are moved to GPU for inference.
-
-    Args:
-        seq (str): Mutant protein sequence
-
-    Returns:
-        dict: Dictionary containing sequence and model embeddings for mutant input
-    """
     input_dict = {"seq": seq}
     with torch.no_grad():
         for model_name in selected_models:
@@ -77,17 +51,6 @@ for model_name in selected_models:
 @click.option("--mut_counts", required=True, type=int)
 @click.option("--input_path", required=True, type=str)
 def main(mut_counts, input_path):
-    """
-    Main function to run inference on mutation combinations using the trained model.
-
-    This function loads pre-generated mutation combinations, applies the trained model
-    to predict fitness scores for each combination, and saves the results sorted by
-    predicted fitness. The mutation positions are adjusted by +1 for final output.
-
-    Args:
-        mut_counts (int): Number of mutations in each combination
-        input_path (str): Path to the directory containing the best parameters of the finetuned model
-    """
     data = pd.read_csv(f"sorted_mut_counts_{mut_counts}.csv", index_col=0)
 
     if input_path == "../02_final_model":
@@ -98,7 +61,6 @@ def main(mut_counts, input_path):
 
     model = ModelUnion(num_layer, selected_models)
 
-    # load down stream model parameters
     model_state_dict = model.state_dict().copy()
     model_state_dict.update(torch.load(os.path.join(input_path, "finetune_best.pth"), weights_only=True).copy())
     model.load_state_dict(model_state_dict)
@@ -113,7 +75,6 @@ def main(mut_counts, input_path):
             mut_data = generate_mut_input(mut_seq)
             data.loc[mut_name, "pred"] = model(wt_data, mut_data).item()
 
-    # save csv (mut_pos + 1)
     for multi_mut_info in data.index:
         tmp_str = ""
         for single_mut_info in multi_mut_info.split(","):
