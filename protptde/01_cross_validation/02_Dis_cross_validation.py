@@ -4,9 +4,6 @@ import seaborn as sns
 from cycler import cycler
 import matplotlib.pyplot as plt
 
-#######################################################################
-# predefined parameters
-#######################################################################
 
 plt.rcParams["figure.figsize"] = (20, 10)
 plt.rcParams["axes.labelsize"] = 18
@@ -24,7 +21,7 @@ plt.rcParams["axes.prop_cycle"] = cycler("color", ["#74add1", "#ff7f0e", "#2ca02
 data = pd.read_csv("best_score_results/random_seed_0.csv")
 data = data[["value", "params_model_combination", "params_max_lr", "params_num_layer"]]
 
-for i in range(1, 50):
+for i in range(1, 16):
     tmp = pd.read_csv(f"best_score_results/random_seed_{i}.csv")
     tmp = tmp[["value", "params_model_combination", "params_max_lr", "params_num_layer"]]
     data = pd.concat([data, tmp])
