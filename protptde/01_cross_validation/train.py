@@ -23,7 +23,7 @@ def format_float_no_sci_no_trailzero(x):
     return str(x)
 
 
-def df_float_to_str(df: pd.DataFrame):
+def df_float_to_str(df):
     out = df.copy()
     for col in out.columns:
         if pd.api.types.is_numeric_dtype(out[col]):
@@ -31,7 +31,7 @@ def df_float_to_str(df: pd.DataFrame):
     return out
 
 
-def save_csv_no_sci_append(path: str, new_df: pd.DataFrame, append: bool, dedup_cols=None):
+def save_csv_no_sci_append(path, new_df, append, dedup_cols=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if append and os.path.exists(path):
         old_df = pd.read_csv(path)
@@ -247,14 +247,14 @@ def main(random_seed):
                 self._nl_val = nl_val
                 self._lr_val = lr_val
 
-            def suggest_categorical(self, name, choices):
+            def suggest_categorical(self, name):
                 if name == "model_combination":
                     return self._mc_val
                 if name == "max_lr":
                     return self._lr_val
                 raise ValueError(f"Unexpected categorical param: {name}")
 
-            def suggest_int(self, name, low, high):
+            def suggest_int(self, name):
                 if name == "num_layer":
                     return self._nl_val
                 raise ValueError(f"Unexpected int param: {name}")
