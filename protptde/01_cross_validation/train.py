@@ -247,14 +247,14 @@ def main(random_seed):
                 self._nl_val = nl_val
                 self._lr_val = lr_val
 
-            def suggest_categorical(self, name):
+            def suggest_categorical(self, name, choices):
                 if name == "model_combination":
                     return self._mc_val
                 if name == "max_lr":
                     return self._lr_val
                 raise ValueError(f"Unexpected categorical param: {name}")
 
-            def suggest_int(self, name):
+            def suggest_int(self, name, low, high):
                 if name == "num_layer":
                     return self._nl_val
                 raise ValueError(f"Unexpected int param: {name}")
