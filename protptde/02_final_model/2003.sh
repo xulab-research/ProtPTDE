@@ -15,5 +15,5 @@ script_name=$(basename "$0")
 gpu=${script_name: -4:1}
 
 for i in $(seq 60 79); do
-    CUDA_VISIBLE_DEVICES="${gpu}" python train.py --random_seed "${i}" --output_dir "results"
+    CUDA_VISIBLE_DEVICES="${gpu}" python train.py --random_seed "${i}"
 done
