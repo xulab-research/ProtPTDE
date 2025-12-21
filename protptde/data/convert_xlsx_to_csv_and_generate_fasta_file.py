@@ -30,14 +30,12 @@ for multi_mut_info in data.index:
     elif multi_mut_info not in dup_list:
         result.loc[tmp_str, "label"] = data.loc[multi_mut_info, "label"]
 
-    # mut_seq
     mut_seq = list(wt_seq)
     for single_mut_info in multi_mut_info.split(","):
         mut_pos = int(single_mut_info[1:-1]) - 1
         mut_seq[mut_pos] = single_mut_info[-1]
     result.loc[tmp_str, "mut_seq"] = "".join(mut_seq)
 
-    # generate fasta file
     os.makedirs(f"../features/{tmp_str}", exist_ok=True)
     with open(f"../features/{tmp_str}/result.fasta", "w") as f:
         f.write(">{}\n{}\n".format(tmp_str, result.loc[tmp_str, "mut_seq"]))
