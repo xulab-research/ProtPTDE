@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 import click
@@ -49,20 +48,12 @@ for model_name in selected_models:
 
 @click.command()
 @click.option("--mut_counts", required=True, type=int)
-@click.option("--input_path", required=True, type=str)
-def main(mut_counts, input_path):
+def main(mut_counts):
     data = pd.read_csv(f"sorted_mut_counts_{mut_counts}.csv", index_col=0)
-
-    if input_path == "../02_final_model":
-        predicted_csv_name = f"predicted_sorted_mut_counts_{mut_counts}"
-    else:
-        last_folder = os.path.basename(os.path.normpath(input_path))
-        predicted_csv_name = f"predicted_sorted_mut_counts_{mut_counts}_{last_folder}"
-
     model = ModelUnion(num_layer, selected_models)
 
     model_state_dict = model.state_dict().copy()
-    model_state_dict.update(torch.load(os.path.join(input_path, "finetune_best.pth"), weights_only=True).copy())
+    model_state_dict.update(torch.load("../02_final_model/finetune_best.pth").copy())
     model.load_state_dict(model_state_dict)
 
     model.eval().cuda()
@@ -84,7 +75,7 @@ def main(mut_counts, input_path):
     data = data.set_index("mut_name")
     data = data[["pred"]]
     data = data.sort_values("pred", ascending=False)
-    data.to_csv(f"{predicted_csv_name}.csv")
+    data.to_csv(f"predicted_sorted_mut_counts_{mut_counts}.csv")
 
 
 if __name__ == "__main__":
