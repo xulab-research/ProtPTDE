@@ -1,5 +1,7 @@
 # ProtPTDE: Protein Pre-Training Model-Assisted Directed Evolution
 
+
+
 **ProtPTDE** is a computational framework that accelerates protein directed evolution by integrating multiple deep learning models. Our solution features **unified parameter governance** through a single configuration file and **extensible architecture** supporting custom protein language models and multi-model embeddings.
 
 ##  Key Features
@@ -27,21 +29,21 @@ conda install numba -y
 1. **Mutation Data**: `.xlsx` file in `01_data_processing/` directory containing mutations and fitness values
 2. **Wild-type Sequence**: FASTA file named `result.fasta` in `features/wt/` directory
 
->  **Important**: Before execution, rename bash scripts in `01_cross_validation/` and `02_final_model/` folders to match your GPU configuration. The last digit indicates GPU card number (e.g., `2000.sh` → GPU 0).
+>  **Important**: Before execution, rename bash scripts in `02_cross_validation/` and `03_final_model/` folders to match your GPU configuration. The last digit indicates GPU card number (e.g., `2000.sh` → GPU 0).
 
 ##  Workflow
 
 ### 1. Data Processing & Embedding Generation
 *Converts mutation data to standardized format and generates protein embeddings from multiple pre-trained models.*
 
-1. **Configure parameters** in `config.json` : 
-   <br />
+1. **Configure parameters** in `config.json` :  
+
    Set `"basic_data_name"` to your data file name (without extension)
 
 2. **Execute commands**
 ```bash
 cd 01_data_processing
-python 01_convert_xlsx_to_csv_and_generate_fasta_file.py
+python 01_convert_and_generate_fasta_file.py
 cd ..
 
 cd generate_features
@@ -49,14 +51,14 @@ python generate_all_embeddings.py
 cd ..
 ```
 
-3. **Proceed to next steps**
+3. **Proceed to next steps** : 
    Continue with cross validation after embeddings are generated
 
 ### 2. Cross Validation
 *Identifies optimal model architectures and hyperparameters through systematic validation.*
 
 1. **Configure parameters** in `config.json` :
-   <br />
+
    Set `"single_model_embedding_output_dim"` ;
    <br />
    Adjust `"cross_validation"` parameters ;
@@ -78,8 +80,9 @@ cd ..
 ### 3. Training & Fine-tuning
 *Builds robust predictive models through ensemble training and targeted fine-tuning.*
 
-1. **Configure parameters** in `config.json`
-   <br />Adjust training parameters under `"final_model.train_parameter"`;
+1. **Configure parameters** in `config.json`  
+
+   Adjust training parameters under `"final_model.train_parameter"`;
    <br />Set fine-tuning parameters under `"final_model.finetune_parameter"`.
 
 2. **Execute commands**
@@ -97,7 +100,9 @@ cd ..
 ### 4. Inference & Clustering
 *Predicts fitness for novel mutations and clusters results by prediction reliability.*
 
-1. **Configure parameters** in `config.json` :  <br />Set `"max_mutations"` under `"inference"`
+1. **Configure parameters** in `config.json` : 
+
+   Set `"max_mutations"` under `"inference"`
 
 2. **Execute commands**
 ```bash
