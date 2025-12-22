@@ -80,22 +80,6 @@ def spearman_corr(pred, true):
     return torch.clamp(spearman_corr, -1.0, 1.0)
 
 
-def get_mutation_positions_from_sequences(wt_seq, mut_seq):
-
-    if not isinstance(wt_seq, list):
-        wt_seq = [wt_seq]
-        mut_seq = [mut_seq]
-    mut_pos_list = []
-    for wt, mut in zip(wt_seq, mut_seq):
-        assert len(wt) == len(mut), f"Sequence length mismatch: WT={len(wt)}, MUT={len(mut)}"
-        mut_pos = torch.zeros(len(wt), dtype=torch.int)
-        for i, (wt_aa, mut_aa) in enumerate(zip(wt, mut)):
-            if wt_aa != mut_aa:
-                mut_pos[i] = 1
-        mut_pos_list.append(mut_pos)
-    return torch.stack(mut_pos_list)
-
-
 class BatchData(torch.utils.data.Dataset):
 
     def __init__(self, csv, selected_models):
@@ -110,10 +94,8 @@ class BatchData(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         mut_info = self.csv.iloc[index].name
-        mut_seq = str(list(SeqIO.parse(f"../features/{mut_info}/result.fasta", "fasta"))[0].seq)
-
         wt_data = {"seq": self.wt_seq}
-        mut_data = {"seq": mut_seq}
+        mut_data = {"seq": str(list(SeqIO.parse(f"../features/{mut_info}/result.fasta", "fasta"))[0].seq)}
         for model_name in self.selected_models:
             wt_data[f"{model_name}_embedding"] = torch.load(f"../features/wt/{model_name}_embedding.pt")
             mut_data[f"{model_name}_embedding"] = torch.load(f"../features/{mut_info}/{model_name}_embedding.pt")
@@ -188,15 +170,17 @@ class ModelUnion(torch.nn.Module):
         self.finetune_coef = torch.nn.Parameter(torch.tensor([1.0], requires_grad=False))
 
     def forward(self, wt_data, mut_data):
-
         wt_embeddings = {key: emb for key, emb in wt_data.items() if key.endswith("_embedding")}
         mut_embeddings = {key: emb for key, emb in mut_data.items() if key.endswith("_embedding")}
 
         wt_value = self.down_stream_model(wt_embeddings)
         mut_value = self.down_stream_model(mut_embeddings)
-        mut_pos = get_mutation_positions_from_sequences(wt_data["seq"], mut_data["seq"])
+
+        wt_seq, mut_seq = wt_data["seq"], mut_data["seq"]
+        if not isinstance(wt_seq, list):
+            wt_seq, mut_seq = [wt_seq], [mut_seq]
         device = mut_value.device
-        mut_pos = mut_pos.to(device)
+        mut_pos = torch.stack([torch.tensor([int(wt_aa != mut_aa) for wt_aa, mut_aa in zip(wt_item, mut_item)], dtype=torch.int, device=device) for wt_item, mut_item in zip(wt_seq, mut_seq)])
 
         delta_value = (mut_value - wt_value).squeeze(-1) * mut_pos
         delta_value = delta_value.sum(1)
