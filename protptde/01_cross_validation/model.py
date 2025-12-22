@@ -9,7 +9,6 @@ with open("../config/config.json", "r", encoding="utf-8") as f:
 
 
 def spearman_loss(pred, true, regularization_strength, regularization):
-
     assert pred.device == true.device
     assert pred.shape == true.shape
     assert pred.shape[0] == 1
@@ -31,7 +30,6 @@ def spearman_loss(pred, true, regularization_strength, regularization):
 
 
 def _find_repeats(data):
-
     temp = data.detach().clone()
     temp = temp.sort()[0]
 
@@ -44,7 +42,6 @@ def _find_repeats(data):
 
 
 def _rank_data(data):
-
     n = data.numel()
     rank = torch.empty_like(data)
     idx = data.argsort()
@@ -58,7 +55,6 @@ def _rank_data(data):
 
 
 def spearman_corr(pred, true):
-
     assert pred.dtype == true.dtype
     assert pred.ndim <= 2 and true.ndim <= 2
 
@@ -83,18 +79,15 @@ def spearman_corr(pred, true):
 class BatchData(torch.utils.data.Dataset):
 
     def __init__(self, csv, selected_models):
-
         self.csv = csv
         self.selected_models = selected_models
-        self.wt_seq = str(list(SeqIO.parse("../features/wt/result.fasta", "fasta"))[0].seq)
 
     def __len__(self):
         return len(self.csv)
 
     def __getitem__(self, index):
-
         mut_info = self.csv.iloc[index].name
-        wt_data = {"seq": self.wt_seq}
+        wt_data = {"seq": str(list(SeqIO.parse("../features/wt/result.fasta", "fasta"))[0].seq)}
         mut_data = {"seq": str(list(SeqIO.parse(f"../features/{mut_info}/result.fasta", "fasta"))[0].seq)}
         for model_name in self.selected_models:
             wt_data[f"{model_name}_embedding"] = torch.load(f"../features/wt/{model_name}_embedding.pt")
@@ -104,7 +97,6 @@ class BatchData(torch.utils.data.Dataset):
 
 
 def to_gpu(obj, device):
-
     if isinstance(obj, torch.Tensor):
         try:
             return obj.to(device=device, non_blocking=True)
@@ -133,13 +125,10 @@ class DownStreamModel(torch.nn.Module):
         embedding_output_dim = self.config["single_model_embedding_output_dim"]
         for model_name in self.selected_models:
             input_dim = self.config["all_model"][model_name]["shape"]
-
             self.model_transforms[model_name] = torch.nn.Sequential(torch.nn.LayerNorm(input_dim), torch.nn.Linear(input_dim, embedding_output_dim), torch.nn.LeakyReLU())
 
-        total_output_dim = len(self.selected_models) * embedding_output_dim
-
         layers = []
-        input_dim = total_output_dim
+        input_dim = len(self.selected_models) * embedding_output_dim
         for _ in range(num_layer):
             layers.append(torch.nn.Linear(input_dim, 64))
             layers.append(torch.nn.LeakyReLU())
@@ -149,7 +138,6 @@ class DownStreamModel(torch.nn.Module):
         self.read_out = torch.nn.Sequential(*layers)
 
     def forward(self, embeddings_dict):
-
         transformed_embeddings = []
         for model_name in self.selected_models:
             embedding = embeddings_dict[f"{model_name}_embedding"]
@@ -164,7 +152,6 @@ class DownStreamModel(torch.nn.Module):
 class ModelUnion(torch.nn.Module):
 
     def __init__(self, num_layer, selected_models):
-
         super().__init__()
         self.down_stream_model = DownStreamModel(num_layer, selected_models)
         self.finetune_coef = torch.nn.Parameter(torch.tensor([1.0], requires_grad=False))
