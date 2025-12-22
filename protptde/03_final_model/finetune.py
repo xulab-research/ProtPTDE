@@ -42,7 +42,7 @@ warmup_epochs = int(finetune_parameter["warmup_epochs_ratio"] * total_epochs)
 batch_size = finetune_parameter["batch_size"]
 test_size = finetune_parameter["test_size"]
 
-all_csv = pd.read_csv(f"../data/{basic_data_name}.csv", index_col=0)
+all_csv = pd.read_csv(f"../01_data_processing/{basic_data_name}.csv", index_col=0)
 mut_info_list = all_csv.index.tolist()
 _, _, vectors = stratified_sampling_for_mutation_data(mut_info_list)
 
