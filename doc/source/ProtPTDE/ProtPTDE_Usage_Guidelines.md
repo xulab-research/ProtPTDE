@@ -137,18 +137,4 @@ cd ..
  
 
    > Function names must follow this pattern with your model name replacing `[yourmodelname]` (e.g., `get_esm2_model` and `generate_esm2_embedding`)
-
-##  Documentation
-Complete usage guidelines and API documentation:  
-[https://protptde-usage-guidelines.readthedocs.io/en/latest/](https://protptde-usage-guidelines.readthedocs.io/en/latest/)
-
----
-
->  **Pro Tip**: All workflow parameters are centrally managed in `config/config.json`. The most critical parameters to customize for new datasets are:
-> 
-> 1. `"basic_data_name"` - Your input data filename
-> 2. `"all_model"` - Pre-trained models to use (add custom models here)
-> 3. `"cross_validation.hyperparameter_search"` - Search space for your protein system
-> 4. `"inference.max_mutations"` - Number of novel mutations to predict
-> 
-> **Never edit individual scripts** - all changes should be made in the config file for pipeline consistency.
+  
