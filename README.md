@@ -1,117 +1,154 @@
-<h1 align="center">ProtPTDE</h1>
-
-- **Documentation** [![Documentation badge](https://img.shields.io/readthedocs/tidymut/latest?logo=readthedocs&logoColor=white)](https://protptde-usage-guidelines.readthedocs.io/en/latest/): https://protptde-usage-guidelines.readthedocs.io/en/latest/
-
-ProtPTDE (Protein Pre-Training Model-Assisted Protein Directed Evolution) is a computational strategy designed to assist protein directed evolution by integrating multiple deep learning models. A key design highlight of this framework lies in its streamlined parameter management: we have centralized the majority of parameters and hyperparameters involved in the entire architectural workflow and fitness prediction framework into a single configuration file, `config/config.json`.  
-
-This centralized structure enables **unified parameter governance**: when users need to adjust a parameter, they only need to modify the target entry in `config.json`—the system will automatically sync this update across all associated scripts. This eliminates the cumbersome, error-prone process of manually searching through multiple files to modify parameters individually, thereby achieving highly centralized control and automated parameter tuning.  
-
-Furthermore, we have prioritized **framework extensibility** to accommodate diverse research needs:  
-1. **Adding custom protein language models**: Users can easily integrate new protein language models by developing their own `function.py` files, following the template provided in `generate_features/{model}_embedding/function.py`. Once created, the new model is automatically incorporated into the framework’s model search scope, requiring no extensive modifications to the core codebase.  
-2. **Supporting multi-model embedding concatenation**: We have expanded the framework’s capability to concatenate embeddings from **multiple models** (instead of limiting to a single model). This design not only grants users greater flexibility in model selection but also allows leveraging richer, multi-source embedding information—enhancing the potential for predicting the structure and fitness of complex proteins.
+# ProtPTDE: Protein Pre-Training Model-Assisted Directed Evolution
 
 
-## Install software on Linux
 
-1. install `Anaconda` / `Miniconda` software
+**ProtPTDE** is a computational framework that accelerates protein directed evolution by integrating multiple deep learning models. Our solution features **unified parameter governance** through a single configuration file and **extensible architecture** supporting custom protein language models and multi-model embeddings.
 
-2. install Python packages
+##  Key Features
+- **Centralized Configuration**: All parameters managed in `config/config.json`
+- **Multi-Model Integration**: Concatenate embeddings from multiple protein language models
+- **Extensible Design**: Easily add custom protein language models
+- **Automated Workflow**: From data processing to fitness prediction and cluster analysis
 
+## Installation
+
+1. **Create conda environment**
 ```bash
-conda create -n Prot_PTDE python=3.13
+conda create -n Prot_PTDE python=3.13 -y
 conda activate Prot_PTDE
-
-pip install torch==2.7.1
-pip install tqdm
-pip install click
-pip install biopython
-pip install "pandas[excel]"
-conda install numba
-pip install scikit-learn
-pip install more-itertools
-pip install iterative-stratification
-pip install optuna
-pip install transformers
-pip install einops
-pip install seaborn
-pip install plotly
 ```
 
-## Usage
-
-* The model requires two essential input files:
-A ``.xlsx`` file (referred to as mutation_data_file) stored in the ``data/`` directory, which contains mutation information and their corresponding fitness values.
-A FASTA file of the wild-type sequence, named ``result.fasta``, located in the ``features/wt/`` directory.
-
-
-
-* Bash scripts with filenames in the format of ``2000.sh``, ``2001.sh``, etc.—specifically those located in the ``01_cross_validation/`` and ``02_final_model/`` folders—must be renamed according to your server configuration. Note that the last digit of each such script's filename indicates the GPU card number used on the server (e.g., ``2000.sh`` corresponds to GPU card 0, ``2013.sh`` to GPU card 3, and so forth). Additionally, ensure the corresponding script names (e.g., ``2000.sh``, ``2001.sh``) referenced in ``01_train.sh`` (within both ``01_cross_validation/`` and ``02_final_model/``) are updated to match.
-
-
-1. processing data and generate embeddings
-
-Change the value of the key **basic_data_name** in the ``config/config.json`` to the name of the mutation_data_file (without the extension).
-
+2. **Install dependencies**
 ```bash
-# processing data
-cd data
-python convert_xlsx_to_csv_and_generate_fasta_file.py
-cd ../
+pip install torch==2.7.1 tqdm click biopython "pandas[excel]" scikit-learn more-itertools iterative-stratification optuna transformers einops seaborn plotly
+conda install numba -y
+```
 
-# generate embeddings of all models(and it will record the embedding dimension for each corresponding model under the all_model key in the config/config.json)
+##  Required Input Files
+> **Note**: Prepare these files before starting the workflow
+1. **Mutation Data**: `.xlsx` file in `01_data_processing/` directory containing mutations and fitness values
+2. **Wild-type Sequence**: FASTA file named `result.fasta` in `features/wt/` directory
+
+>  **Important**: Before execution, rename bash scripts in `02_cross_validation/` and `03_final_model/` folders to match your GPU configuration. The last digit indicates GPU card number (e.g., `2000.sh` → GPU 0).
+
+##  Workflow
+
+### 1. Data Processing & Embedding Generation
+*Converts mutation data to standardized format and generates protein embeddings from multiple pre-trained models.*
+
+1. **Configure parameters** in `config.json` :  
+
+   Set `"basic_data_name"` to your data file name (without extension)
+
+2. **Execute commands**
+```bash
+cd 01_data_processing
+python 01_convert_and_generate_fasta_file.py
+cd ..
+
 cd generate_features
 python generate_all_embeddings.py
-cd ../
+cd ..
 ```
 
-2. cross validation
+3. **Proceed to next steps** : 
+   Continue with cross validation after embeddings are generated
 
-Before concatenating multiple model embeddings, determine the output dimension of the linear transformation for single model and write it to the **single_model_embedding_output_dim** key in the ``config/config.json`` file.
+### 2. Cross Validation
+*Identifies optimal model architectures and hyperparameters through systematic validation.*
 
-Modify the desired configuration parameters under the **cross_validation** key in the ``config/config.json``. The **hyperparameter_search** field specifies the optional ranges for hyperparameter search using the Optuna library. The **model_number** field determines how many models you want to select for combination. The **training_parameter** field is used to set the basic parameters for model training.
+1. **Configure parameters** in `config.json` :
 
+   Set `"single_model_embedding_output_dim"` ;
+   <br />
+   Adjust `"cross_validation"` parameters ;
+   <br />
+   Define hyperparameter search ranges under `"cross_validation.hyperparameter_search"` .
+
+2. **Execute commands**
 ```bash
-cd 01_cross_validation
+cd 02_cross_validation
 bash 01_train.sh
-python 02_Dis_cross_validation.py
-cd ../
+python 02_Dis_cross_validation.py  # Generates Dis_cross_validation.pdf
+cd ..
 ```
 
-Select the best hyperparameters from the displot (``Dis_cross_validation.pdf``) and write them in **best_hyperparameters** key in the ``config/config.json``. They are **selected_models**, **num_layer** and **max_lr**.
+3. **Update hyperparameters**
+   <br />
+   Based on Dis_cross_validation.pdf, update the `selected_models`, `num_layer`, and `max_lr` parameters in the `best_hyperparameters` section
 
-3. train and finetune
+### 3. Training & Fine-tuning
+*Builds robust predictive models through ensemble training and targeted fine-tuning.*
 
-Adjust the number of model training runs and write it to the **ensemble_size** key in the ``config/config.json``. The training parameters are the same each time, except for model initialization and the batch order of training data provided by DataLoader. The results are saved independently and finally merged and analyzed to evaluate the stability of the final prediction results.
+1. **Configure parameters** in `config.json`  
 
-Modify the basic parameters for model training and finetuning under the **final_model** key in the ``config/config.json``.
+   Adjust training parameters under `"final_model.train_parameter"`;
+   <br />Set fine-tuning parameters under `"final_model.finetune_parameter"`.
 
+2. **Execute commands**
 ```bash
-cd 02_final_model
+cd 03_final_model
 bash 01_train.sh
-python 02_plot_random_seed_train.py
+python 02_plot_random_seed_train.py  # Generates Scatter_best_train_test_epoch_ratio.html
+bash 03_finetune.sh
+cd ..
 ```
 
-Select a good randomseed based on the scatter plot (``Scatter_best_train_test_epoch_ratio.html``) and write it to the **best_hyperparameters** key in the ``config/config.json``.
+3. **Select optimal seed**
+   <br />Based on Scatter_best_train_test_epoch_ratio.html, update the `random_seed` parameter in the `best_hyperparameters` section
 
+### 4. Inference & Clustering
+*Predicts fitness for novel mutations and clusters results by prediction reliability.*
+
+1. **Configure parameters** in `config.json` : 
+
+   Set `"max_mutations"` under `"inference"`
+
+2. **Execute commands**
 ```bash
-bash 03_train_ensemble.sh
-bash 04_finetune.sh
-bash 05_finetune_ensemble.sh
-cd ../
-```
-
-4. inference and get cluster
-
-Determine the maximum number of mutation combinations and write it to the **max_mutations** key in the **inference** section of ``config/config.json``. 
-
-```bash
-cd 03_inference
+cd 04_inference
 bash 01_generate_unpredicted_muts_csv.sh
-bash 02_inference.sh
-bash 03_inference_ensemble.sh
-
-# Finally, only the one with the highest average fitness prediction value of the same site combination is retained, and then all site combinations are sorted in ascending order according to the standard deviation of the fitness value to understand the reliability of the prediction.
-
-bash 04_get_cluster_csv.sh
-cd ../
+bash 02_inference.sh  # Outputs reliability-ranked predictions
+cd ..
 ```
+
+3. **Analyze results**
+   <br />Review the predictions ranked by reliability in the output directory
+
+## Adding Custom Models (if needed)
+*To integrate your own protein language model:*
+
+1. **Create model directory structure**:
+   ```bash
+   mkdir -p generate_features/your_model_embedding
+   touch generate_features/your_model_embedding/function.py
+   ```
+
+2. **Implement model functions** in `generate_features/your_model_embedding/function.py`:
+
+   Ensure your `function.py` includes **exactly two functions** with the following specifications:
+
+   - **Model loader function**:  `get_[yourmodelname]_model() → tuple`  
+     *Loads and caches your model instance using singleton pattern*
+
+   - **Embedding generator function**:  `generate_[yourmodelname]_embedding(sequence: str) → torch.Tensor`  
+     *Generates per-residue embeddings; must return tensor of shape `[sequence_length, embedding_dimension]`*
+
+ 
+
+   > Function names must follow this pattern with your model name replacing `[yourmodelname]` (e.g., `get_esm2_model` and `generate_esm2_embedding`)
+
+##  Documentation
+Complete usage guidelines documentation:  
+[https://protptde-usage-guidelines.readthedocs.io/en/latest/](https://protptde-usage-guidelines.readthedocs.io/en/latest/)
+
+---
+
+>  **Pro Tip**: All workflow parameters are centrally managed in `config/config.json`. The most critical parameters to customize for new datasets are:
+> 
+> 1. `"basic_data_name"` - Your input data filename
+> 2. `"all_model"` - Pre-trained models to use (add custom models here)
+> 3. `"cross_validation.hyperparameter_search"` - Search space for your protein system
+> 4. `"inference.max_mutations"` - Number of novel mutations to predict
+> 
+> **Never edit individual scripts** - all changes should be made in the config file for pipeline consistency.
