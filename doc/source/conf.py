@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'ProtPTDE'
-copyright = '2025, Qilin You'
-author = 'Qilin You'
-release = 'v1.0'
+copyright = '2025, xulab'
+author = 'xulab'
+release = 'v2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
