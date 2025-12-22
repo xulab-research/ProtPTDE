@@ -53,7 +53,7 @@ def main(mut_counts):
     model = ModelUnion(num_layer, selected_models)
 
     model_state_dict = model.state_dict().copy()
-    model_state_dict.update(torch.load("../02_final_model/finetune_best.pth").copy())
+    model_state_dict.update(torch.load("../03_final_model/finetune_best.pth").copy())
     model.load_state_dict(model_state_dict)
 
     model.eval().cuda()
