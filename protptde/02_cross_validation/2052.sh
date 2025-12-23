@@ -14,6 +14,6 @@ conda activate Prot_PTDE
 script_name=$(basename "$0")
 gpu=${script_name: -4:1}
 
-for i in $(seq 80 99); do
+for i in 44 45; do
     CUDA_VISIBLE_DEVICES="${gpu}" python train.py --random_seed "${i}"
 done
