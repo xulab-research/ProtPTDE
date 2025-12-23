@@ -1,5 +1,4 @@
 import os
-import uuid
 import json
 import click
 import torch
@@ -21,18 +20,6 @@ def format_float_no_sci_no_trailzero(x):
             s = s.rstrip("0").rstrip(".")
         return s
     return str(x)
-
-
-def save_csv_no_sci_append(path, new_df, append, dedup_cols=None):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    if append and os.path.exists(path):
-        old_df = pd.read_csv(path)
-        merged = pd.concat([old_df, new_df], ignore_index=True)
-        if dedup_cols:
-            merged = merged.drop_duplicates(subset=dedup_cols, keep="first")
-        merged.to_csv(path, index=False)
-    else:
-        new_df.to_csv(path, index=False)
 
 
 def stratified_sampling_for_mutation_data(mut_info_list):
@@ -164,7 +151,9 @@ def objective(trial, random_seed):
                 print(f"[{models_name} | num_layer={num_layer} | max_lr={format_float_no_sci_no_trailzero(max_lr)} | seed={random_seed} | fold={k_fold_index}] " f"Stopping at epoch {epoch} due to no improvement in validation loss.", flush=True)
                 break
 
-        save_csv_no_sci_append(path=f"{file}/k_fold_index-{k_fold_index}_loss.csv", new_df=loss.reset_index().rename(columns={"index": "epoch"}), append=False)
+        loss_path = f"{file}/k_fold_index-{k_fold_index}_loss.csv"
+        os.makedirs(os.path.dirname(loss_path), exist_ok=True)
+        loss.reset_index().rename(columns={"index": "epoch"}).to_csv(loss_path, index=False)
         k_fold_test_corr.append(best_corr)
     return float(pd.Series(k_fold_test_corr).mean()) - float(pd.Series(k_fold_test_corr).std())
 
@@ -209,9 +198,6 @@ def main(random_seed):
     else:
         next_number_base = 0
 
-    study_name = f"no-name-{uuid.uuid4()}"
-    print(f"A new study created in memory with name: {study_name}", flush=True)
-
     best_value = None
     best_trial_number = None
 
@@ -248,7 +234,7 @@ def main(random_seed):
         print(f"Trial {trial_number} finished with value: {format_float_no_sci_no_trailzero(score_val)} and parameters: {params_str}. " f"Best is trial {best_trial_number} with value: {format_float_no_sci_no_trailzero(best_value)}.", flush=True)
 
         row_df = pd.DataFrame([{"number": trial_number, "value": score_val, "params_max_lr": lr, "params_model_combination": mc, "params_num_layer": nl, "state": "COMPLETE"}], columns=["number", "value", "params_max_lr", "params_model_combination", "params_num_layer", "state"])
-        save_csv_no_sci_append(path=result_path, new_df=row_df, append=True, dedup_cols=["number"])
+        row_df.to_csv(result_path, mode="a", header=not os.path.exists(result_path), index=False)
 
 
 if __name__ == "__main__":
