@@ -8,7 +8,7 @@
 - **Centralized Configuration**: All parameters managed in `config/config.json`
 - **Multi-Model Integration**: Concatenate embeddings from multiple protein language models
 - **Extensible Design**: Easily add custom protein language models
-- **Automated Workflow**: From data processing to fitness prediction and cluster analysis
+- **Automated Workflow**: From data processing to fitness prediction
 
 ## Installation
 
@@ -78,7 +78,7 @@ cd ..
    Based on Dis_cross_validation.pdf, update the `selected_models`, `num_layer`, and `max_lr` parameters in the `best_hyperparameters` section
 
 ### 3. Training & Fine-tuning
-*Builds robust predictive models through ensemble training and targeted fine-tuning.*
+*Trains robust predictive models with optimal hyperparameters and targeted fine-tuning.*
 
 1. **Configure parameters** in `config.json`  
 
@@ -97,8 +97,8 @@ cd ..
 3. **Select optimal seed**
    <br />Based on Scatter_best_train_test_epoch_ratio.html, update the `random_seed` parameter in the `best_hyperparameters` section
 
-### 4. Inference & Clustering
-*Predicts fitness for novel mutations and clusters results by prediction reliability.*
+### 4. Inference
+*Predicts fitness for novel mutations using the trained model.*
 
 1. **Configure parameters** in `config.json` : 
 
@@ -108,12 +108,12 @@ cd ..
 ```bash
 cd 04_inference
 bash 01_generate_unpredicted_muts_csv.sh
-bash 02_inference.sh  # Outputs reliability-ranked predictions
+bash 02_inference.sh  # Outputs prediction results
 cd ..
 ```
 
 3. **Analyze results**
-   <br />Review the predictions ranked by reliability in the output directory
+   <br />Review the prediction results in the output directory
 
 ## Adding Custom Models (if needed)
 *To integrate your own protein language model:*
