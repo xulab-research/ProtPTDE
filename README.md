@@ -108,12 +108,15 @@ cd ..
 ```bash
 cd 04_inference
 bash 01_generate_unpredicted_muts_csv.sh
-bash 02_inference.sh  # Outputs prediction results
+bash 02_inference.sh  # Performs batch prediction on multiple mutations
+bash 03_get_cluster_csv.sh  # Groups mutations by position and generates summary statistics
 cd ..
 ```
 
 3. **Analyze results**
-   <br />Review the prediction results in the output directory
+   <br />Review the prediction results in the output directory :
+   - `predicted_sorted_mut_counts_{n}.csv` : <br/>Each corresponding file contains predicted scores for all protein variants with n mutation sites
+   - `predicted_sorted_mut_counts_{n}_clustered.csv` : <br/>Each corresponding file contains grouped and summarized data based on its respective `predicted_sorted_mut_counts_{n}.csv` file, grouped by mutation position combinations. It includes the average predicted score, standard deviation, mutation count statistics for each group, as well as the specific mutation sequence with the highest predicted score in each group and its predicted score.
 
 ## Adding Custom Models (if needed)
 *To integrate your own protein language model:*
