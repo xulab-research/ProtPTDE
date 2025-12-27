@@ -7,7 +7,6 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 from pathlib import Path
-from model import ModelUnion
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -36,6 +35,7 @@ def generate_mut_input(seq):
 best_hyperparameters = config["best_hyperparameters"]
 selected_models = best_hyperparameters["selected_models"]
 num_layer = best_hyperparameters["num_layer"]
+random_seed = best_hyperparameters["random_seed"]
 
 wt_seq = str(list(SeqIO.parse("../features/wt/result.fasta", "fasta"))[0].seq)
 
@@ -50,16 +50,10 @@ for model_name in selected_models:
 @click.option("--mut_counts", required=True, type=int)
 def main(mut_counts):
     data = pd.read_csv(f"sorted_mut_counts_{mut_counts}.csv", index_col=0)
-    model = ModelUnion(num_layer, selected_models)
-
-    model_state_dict = model.state_dict().copy()
-    model_state_dict.update(torch.load("../03_final_model/finetune_best.pth").copy())
-    model.load_state_dict(model_state_dict)
-
+    model = torch.load(f"../03_final_model/results/{random_seed}/train_best.pt", map_location="cpu", weights_only=False)
     model.eval().cuda()
 
     wt_data = generate_wt_input(wt_seq)
-
     with torch.no_grad():
         for mut_name in tqdm(data.index):
             mut_seq = data.loc[mut_name, "mut_seq"]

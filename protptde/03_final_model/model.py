@@ -154,7 +154,6 @@ class ModelUnion(torch.nn.Module):
     def __init__(self, num_layer, selected_models):
         super().__init__()
         self.down_stream_model = DownStreamModel(num_layer, selected_models)
-        self.finetune_coef = torch.nn.Parameter(torch.tensor([1.0], requires_grad=False))
 
     def forward(self, wt_data, mut_data):
         wt_embeddings = {key: emb for key, emb in wt_data.items() if key.endswith("_embedding")}
@@ -171,4 +170,4 @@ class ModelUnion(torch.nn.Module):
 
         delta_value = (mut_value - wt_value).squeeze(-1) * mut_pos
         delta_value = delta_value.sum(1)
-        return self.finetune_coef * delta_value
+        return delta_value
